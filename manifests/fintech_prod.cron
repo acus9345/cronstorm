@@ -1,0 +1,16 @@
+# FinTech Core Ledger Production Schedule (14 recurring workloads)
+# Format: m h dom mon dow service_name [db_conns] [duration_min]
+0 * * * *          ach-settlement-batch      28 4
+*/15 * * * *       ledger-reconcile-core     22 3
+*/5 * * * *        stripe-webhook-replay     16 2
+*/10 * * * *       fx-rate-oracle-sync       14 2
+0 */2 * * *        kyc-sanctions-screen      25 5
+*/5 * * * *        card-auth-hold-expiry     18 2
+0 0,6,12,18 * * *  treasury-sweep-calc       32 6
+*/15 * * * *       fraud-velocity-rollup     20 3
+0 * * * *          merchant-payout-queue     24 4
+0 */4 * * *        chargeback-evidence-gen   19 5
+*/30 * * * *       tax-withholding-audit     15 3
+*/10 * * * *       session-token-compactor   12 1
+*/5 * * * *        wire-swift-ack-poller     14 2
+0 0 * * *          regulatory-gl-snapshot    38 8

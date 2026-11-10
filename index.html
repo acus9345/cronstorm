@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRONSTORM // Schedule Collision & Retry-Storm Physics Workbench</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-paper: #F5F3EE;
+      --bg-panel: #ECE9E1;
+      --bg-surface: #FFFFFF;
+      --ink-primary: #161615;
+      --ink-secondary: #52514E;
+      --ink-muted: #85837E;
+      --border-hairline: #D4D0C7;
+      --border-strong: #161615;
+      --accent-vermilion: #C83E2B;
+      --accent-ochre: #B87314;
+      --accent-forest: #1E6B4B;
+      --accent-cobalt: #1D4ED8;
+      --trace-grid: #E5E1D8;
+    }
+
+    html.dark-instrument {
+      --bg-paper: #111211;
+      --bg-panel: #191A19;
+      --bg-surface: #1E201E;
+      --ink-primary: #EAE8E1;
+      --ink-secondary: #A3A097;
+      --ink-muted: #6E6C66;
+      --border-hairline: #2E302E;
+      --border-strong: #EAE8E1;
+      --accent-vermilion: #E5533D;
+      --accent-ochre: #E09628;
+      --accent-forest: #34A876;
+      --accent-cobalt: #5B8DEF;
+      --trace-grid: #232523;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hairline-border {
+      border: 1px solid var(--border-hairline);
+    }
+
+    .hairline-b {
+      border-bottom: 1px solid var(--border-hairline);
+    }
+
+    .hairline-t {
+      border-top: 1px solid var(--border-hairline);
+    }
+
+    .hairline-r {
+      border-right: 1px solid var(--border-hairline);
+    }
+
+    .panel-bg {
+      background-color: var(--bg-panel);
+    }
+
+    .surface-bg {
+      background-color: var(--bg-surface);
+    }
+
+    .btn-instrument {
+      background-color: var(--bg-surface);
+      color: var(--ink-primary);
+      border: 1px solid var(--border-hairline);
+      padding: 5px 10px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background-color 80ms ease, border-color 80ms ease, transform 60ms ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-instrument:hover {
+      border-color: var(--ink-primary);
+      background-color: var(--bg-panel);
+    }
+
+    .btn-instrument:active {
+      transform: translateY(1px);
+    }
+
+    .btn-instrument.btn-primary {
+      background-color: var(--ink-primary);
+      color: var(--bg-paper);
+      border-color: var(--ink-primary);
+    }
+
+    .btn-instrument.btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-instrument.btn-danger {
+      background-color: var(--accent-vermilion);
+      color: #FFFFFF;
+      border-color: var(--accent-vermilion);
+    }
+
+    .tab-btn {
+      padding: 8px 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-secondary);
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .tab-btn:hover {
+      color: var(--ink-primary);
+    }
+
+    .tab-btn.active {
+      color: var(--ink-primary);
+      border-bottom-color: var(--accent-vermilion);
+      background-color: var(--bg-surface);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      background-color: var(--bg-surface);
+      color: var(--ink-primary);
+      border: 1px solid var(--border-hairline);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      padding: 5px 8px;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--ink-primary);
+    }
+
+    input[type="range"] {
+      accent-color: var(--accent-vermilion);
+      cursor: pointer;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      display: inline-block;
+    }
+
+    .badge-pill {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      padding: 1px 5px;
+      border: 1px solid var(--border-hairline);
+      text-transform: uppercase;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-panel);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--ink-muted);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP INSTRUMENT HEADER -->
+  <header class="hairline-b panel-bg px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2.5 h-2.5" style="background-color: var(--accent-vermilion);"></span>
+        <span class="mono font-semibold text-sm tracking-tight">CRONSTORM</span>
+        <span class="mono text-[11px] px-1.5 py-0.5 hairline-border surface-bg" style="color: var(--ink-secondary);">v1.4.2 // REV-B</span>
+      </div>
+      <span class="hidden sm:inline text-xs" style="color: var(--ink-secondary);">
+        Distributed Schedule Collision Analyzer &amp; Metastable Retry Physics Engine
+      </span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <label for="presetSelect" class="mono text-[11px]" style="color: var(--ink-secondary);">MANIFEST PRESET:</label>
+      <select id="presetSelect" class="text-xs py-1">
+        <option value="fintech">FinTech Core Ledger (14 jobs // :00 pool exhaustion)</option>
+        <option value="k8s_fleet">K8s Multi-Tenant Fleet (12 jobs // quarter-hour spike)</option>
+        <option value="ml_pipeline">ETL + Feature Store Sync (8 jobs // hourly lockup)</option>
+      </select>
+      <button id="btnDealignAll" class="btn-instrument btn-primary" title="Deterministically offset colliding cron schedules using FNV-1a service-name hashing">
+        <span>[AUTO-SPLITTER: DE-ALIGN COLLISIONS]</span>
+      </button>
+      <button id="btnResetManifest" class="btn-instrument" title="Restore original un-jittered schedules">
+        <span>RESET</span>
+      </button>
+      <button id="btnThemeToggle" class="btn-instrument" title="Switch between Archival Paper and Darkroom Phosphor">
+        <span id="themeLabel">DARKROOM</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- TELEMETRY READOUT STRIP -->
+  <section class="hairline-b surface-bg grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="p-3 hairline-r hairline-b lg:border-b-0">
+      <div class="mono text-[10px] uppercase tracking-wider" style="color: var(--ink-muted);">01 / PEAK MINUTE LOAD</div>
+      <div class="mt-1 flex items-baseline gap-2">
+        <span id="metricPeakConn" class="mono text-xl font-semibold">0</span>
+        <span class="mono text-xs" style="color: var(--ink-secondary);">DB conns</span>
+      </div>
+      <div id="metricPeakTimestamp" class="mono text-[11px] mt-0.5" style="color: var(--accent-vermilion);">@ 00:00 UTC</div>
+    </div>
+
+    <div class="p-3 hairline-r hairline-b lg:border-b-0">
+      <div class="mono text-[10px] uppercase tracking-wider" style="color: var(--ink-muted);">02 / POOL SATURATION</div>
+      <div class="mt-1 flex items-baseline gap-2">
+        <span id="metricPoolPct" class="mono text-xl font-semibold">0%</span>
+        <span id="metricPoolCapLabel" class="mono text-xs" style="color: var(--ink-secondary);">of 120 cap</span>
+      </div>
+      <div id="metricPoolStatus" class="mono text-[11px] mt-0.5">NOMINAL</div>
+    </div>
+
+    <div class="p-3 hairline-r hairline-b sm:border-b-0">
+      <div class="mono text-[10px] uppercase tracking-wider" style="color: var(--ink-muted);">03 / COLLISION WINDOWS</div>
+      <div class="mt-1 flex items-baseline gap-2">
+        <span id="metricOverloadMinutes" class="mono text-xl font-semibold">0</span>
+        <span class="mono text-xs" style="color: var(--ink-secondary);">mins / 24h</span>
+      </div>
+      <div id="metricTopCluster" class="mono text-[11px] mt-0.5" style="color: var(--ink-secondary);">≥3 jobs aligned</div>
+    </div>
+
+    <div class="p-3 hairline-r hairline-b sm:border-b-0">
+      <div class="mono text-[10px] uppercase tracking-wider" style="color: var(--ink-muted);">04 / CREST FACTOR (PEAK/MEAN)</div>
+      <div class="mt-1 flex items-baseline gap-2">
+        <span id="metricCrestFactor" class="mono text-xl font-semibold">1.0x</span>
+        <span class="mono text-xs" style="color: var(--ink-secondary);">burstiness</span>
+      </div>
+      <div id="metricImprovementNote" class="mono text-[11px] mt-0.5" style="color: var(--accent-forest);">Unmodified baseline</div>
+    </div>
+
+    <div class="p-3 hairline-r">
+      <div class="mono text-[10px] uppercase tracking-wider" style="color: var(--ink-muted);">05 / RETRY AMPLIFICATION</div>
+      <div class="mt-1 flex items-baseline gap-2">
+        <span id="metricRetryAmp" class="mono text-xl font-semibold">1.00x</span>
+        <span class="mono text-xs" style="color: var(--ink-secondary);">traffic mult</span>
+      </div>
+      <div id="metricRetryPolicyLabel" class="mono text-[11px] mt-0.5" style="color: var(--ink-secondary);">Policy: No Jitter</div>
+    </div>
+
+    <div class="p-3">
+      <div class="mono text-[10px] uppercase tracking-wider" style="color: var(--ink-muted);">06 / RECOVERY HALF-LIFE</div>
+      <div class="mt-1 flex items-baseline gap-2">
+        <span id="metricRecoveryTime" class="mono text-xl font-semibold">0s</span>
+        <span class="mono text-xs" style="color: var(--ink-secondary);">post-fault</span>
+      </div>
+      <div id="metricMetastableState" class="mono text-[11px] mt-0.5" style="color: var(--accent-vermilion);">METASTABLE RISK</div>
+    </div>
+  </section>
+
+  <!-- NAVIGATION TABS & GLOBAL CAPACITY CONTROLS -->
+  <div class="hairline-b panel-bg px-4 flex flex-wrap items-center justify-between gap-2">
+    <nav class="flex items-center overflow-x-auto" role="tablist">
+      <button class="tab-btn active" data-tab="tab-collision" id="btnTabCollision">
+        01. 24H Collision Oscilloscope
+      </button>
+      <button class="tab-btn" data-tab="tab-retry" id="btnTabRetry">
+        02. Retry-Storm Physics Lab
+      </button>
+      <button class="tab-btn" data-tab="tab-diff" id="btnTabDiff">
+        03. De-Alignment Patch &amp; CLI Export
+      </button>
+      <button class="tab-btn" data-tab="tab-audit" id="btnTabAudit">
+        04. Engineering Spec &amp; Code Review
+      </button>
+    </nav>
+
+    <div class="flex items-center gap-3 py-1.5">
+      <div class="flex items-center gap-2">
+        <label for="inputPoolCap" class="mono text-[11px]" style="color: var(--ink-secondary);">DB CONN POOL CAP:</label>
+        <input id="inputPoolCap" type="range" min="40" max="300" step="5" value="120" class="w-24" />
+        <span id="labelPoolCapVal" class="mono text-xs font-semibold w-9">120</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <label for="selectSpreadStrategy" class="mono text-[11px]" style="color: var(--ink-secondary);">OFFSET ALGO:</label>
+        <select id="selectSpreadStrategy" class="text-[11px] py-0.5">
+          <option value="fnv_hash">FNV-1a Deterministic Hash</option>
+          <option value="coprime">Coprime Step + Phase Shift</option>
+          <option value="valley_greedy">Greedy Valley-Filling</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN WORKBENCH VIEWPORT -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12">
+
+    <!-- LEFT COLUMN: MANIFEST EDITOR & SCHEDULE REGISTRY (5 COLS) -->
+    <aside class="lg:col-span-5 hairline-r flex flex-col">
+      <!-- Manifest Toolbar -->
+      <div class="p-3 hairline-b panel-bg flex items-center justify-between gap-2">
+        <div>
+          <h2 class="mono text-xs font-semibold uppercase tracking-wider">CRONTAB / K8S SCHEDULE REGISTRY</h2>
+          <p class="text-[11px]" style="color: var(--ink-secondary);">
+            Format: <code class="mono">m h dom mon dow service_name [conns] [duration_min]</code>
+          </p>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button id="btnToggleRawEditor" class="btn-instrument">
+            <span id="rawEditorToggleText">RAW CRONTAB</span>
+          </button>
+          <button id="btnAddJobModal" class="btn-instrument">
+            <span>+ ADD JOB</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Collapsible Raw Crontab Textarea -->
+      <div id="rawEditorContainer" class="hidden p-3 hairline-b surface-bg">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="mono text-[11px] font-medium" style="color: var(--ink-secondary);">
+            PASTE PRODUCTION CRONTAB OR K8S SCHEDULE LINES:
+          </span>
+          <button id="btnApplyRawCrontab" class="btn-instrument btn-primary">PARSE &amp; LOAD</button>
+        </div>
+        <textarea id="textareaRawCrontab" rows="8" class="w-full text-xs leading-relaxed" spellcheck="false"></textarea>
+        <div id="rawParseFeedback" class="mono text-[11px] mt-1" style="color: var(--accent-forest);"></div>
+      </div>
+
+      <!-- Inline Add Job Row -->
+      <div id="addJobContainer" class="hidden p-3 hairline-b surface-bg">
+        <div class="mono text-[11px] font-semibold mb-2">REGISTER NEW SCHEDULED WORKLOAD</div>
+        <div class="grid grid-cols-12 gap-2 items-end">
+          <div class="col-span-4">
+            <label class="block mono text-[10px]" style="color: var(--ink-secondary);">CRON EXPR (5-FIELD)</label>
+            <input id="newJobCron" type="text" value="*/15 * * * *" class="w-full" />
+          </div>
+          <div class="col-span-4">
+            <label class="block mono text-[10px]" style="color: var(--ink-secondary);">SERVICE IDENTIFIER</label>
+            <input id="newJobName" type="text" value="fraud-score-sync" class="w-full" />
+          </div>
+          <div class="col-span-2">
+            <label class="block mono text-[10px]" style="color: var(--ink-secondary);">CONNS</label>
+            <input id="newJobConns" type="number" min="1" max="150" value="24" class="w-full" />
+          </div>
+          <div class="col-span-2 flex gap-1">
+            <button id="btnConfirmAddJob" class="btn-instrument btn-primary w-full justify-center">ADD</button>
+          </div>
+        </div>
+        <div id="addJobError" class="mono text-[11px] mt-1 hidden" style="color: var(--accent-vermilion);"></div>
+      </div>
+
+      <!-- Filter & Search Strip -->
+      <div class="px-3 py-2 hairline-b surface-bg flex items-center justify-between gap-2">
+        <input id="inputSearchJobs" type="text" placeholder="Filter by service or cron (e.g. */5, billing)..." class="w-full text-xs" />
+        <select id="selectCollisionFilter" class="text-xs">
+          <option value="all">All Jobs</option>
+          <option value="colliding">Colliding Only</option>
+          <option value="modified">Jittered / Patched</option>
+        </select>
+      </div>
+
+      <!-- Interactive Table of Scheduled Workloads -->
+      <div class="flex-1 overflow-y-auto max-h-[540px]">
+        <table class="w-full border-collapse text-left">
+          <thead>
+            <tr class="panel-bg hairline-b mono text-[10px] uppercase" style="color: var(--ink-secondary);">
+              <th class="py-2 px-2.5">Service</th>
+              <th class="py-2 px-2">Cron Expression</th>
+              <th class="py-2 px-2 text-right">Conns</th>
+              <th class="py-2 px-2 text-right">Dur</th>
+              <th class="py-2 px-2 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="jobsTableBody" class="divide-y" style="border-color: var(--border-hairline);">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bottom Collision Hotspot Summary -->
+      <div class="p-3 hairline-t panel-bg">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="mono text-[11px] font-semibold uppercase">TOP SYNCHRONIZATION HAZARDS (24H)</span>
+          <span class="mono text-[10px]" style="color: var(--ink-secondary);">CLICK TIMESTAMP TO INSPECT MINUTE</span>
+        </div>
+        <div id="collisionHotspotsList" class="flex flex-wrap gap-1.5">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT COLUMN: ACTIVE INSTRUMENT VIEWPORT (7 COLS) -->
+    <section class="lg:col-span-7 flex flex-col surface-bg">
+
+      <!-- TAB 1: 24H COLLISION OSCILLOSCOPE -->
+      <div id="tab-collision" class="tab-pane flex-1 flex flex-col p-4 gap-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="mono text-xs font-semibold uppercase tracking-wider">
+              24-HOUR CONCURRENT CONNECTION IMPULSE TRACE (1,440 MINUTES)
+            </h3>
+            <p class="text-xs" style="color: var(--ink-secondary);">
+              Hover or click any minute along the trace to inspect the exact colliding microservices and pool saturation.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 mono text-[11px]">
+            <span class="flex items-center gap-1.5">
+              <span class="status-dot" style="background-color: var(--ink-primary);"></span> Active Demand
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="status-dot" style="background-color: var(--accent-vermilion);"></span> Pool Exhaustion (&gt;Cap)
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="status-dot" style="background-color: var(--ink-muted);"></span> Baseline Ghost
+            </span>
+          </div>
+        </div>
+
+        <!-- Oscilloscope Canvas Container -->
+        <div class="hairline-border p-2 panel-bg relative">
+          <canvas id="collisionCanvas" class="w-full block cursor-crosshair" style="height: 230px;"></canvas>
+        </div>
+
+        <!-- Minute Inspector Card + Hourly Density Heatmap -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 flex-1">
+          <!-- Selected Minute Breakdown -->
+          <div class="md:col-span-6 hairline-border p-3 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between hairline-b pb-2 mb-2">
+                <div>
+                  <span class="mono text-[10px] uppercase" style="color: var(--ink-muted);">SELECTED MINUTE SLICE</span>
+                  <div id="inspectorTimeLabel" class="mono text-base font-semibold">00:00 UTC (Minute 0)</div>
+                </div>
+                <div class="text-right">
+                  <span class="mono text-[10px] uppercase" style="color: var(--ink-muted);">CONCURRENT CONNS</span>
+                  <div id="inspectorConnCount" class="mono text-base font-semibold" style="color: var(--accent-vermilion);">0 / 120</div>
+                </div>
+              </div>
+              <div id="inspectorJobsList" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+            <div class="mt-3 pt-2 hairline-t flex items-center justify-between">
+              <span id="inspectorDeltaText" class="mono text-[11px]" style="color: var(--ink-secondary);"></span>
+              <div class="flex gap-1">
+                <button id="btnPrevSpike" class="btn-instrument py-0.5 px-2">&larr; PREV SPIKE</button>
+                <button id="btnNextSpike" class="btn-instrument py-0.5 px-2">NEXT SPIKE &rarr;</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Minute-of-Hour Modulo 60 Phase Diagram -->
+          <div class="md:col-span-6 hairline-border p-3 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between hairline-b pb-2 mb-2">
+                <div>
+                  <span class="mono text-[10px] uppercase" style="color: var(--ink-muted);">MODULO-60 MINUTE PHASE MATRIX (:00 TO :59)</span>
+                  <div class="text-xs font-medium">Hourly Resonance Profile</div>
+                </div>
+                <span class="badge-pill" id="phaseSkewBadge">HIGH :00 BIAS</span>
+              </div>
+              <p class="text-[11px] mb-2" style="color: var(--ink-secondary);">
+                Each cell is a minute of the hour (`:00` top-left to `:59` bottom-right). Human-written crons cluster heavily on `:00`, `:15`, `:30`, `:45`.
+              </p>
+              <div id="modulo60Grid" class="grid grid-cols-10 gap-1 mono text-[10px]">
+                <!-- 60 cells populated by JS -->
+              </div>
+            </div>
+            <div class="mt-3 pt-2 hairline-t flex items-center justify-between mono text-[10px]" style="color: var(--ink-secondary);">
+              <span>0 CONNS</span>
+              <div class="flex items-center gap-1">
+                <span class="w-3 h-2.5 inline-block hairline-border" style="background: var(--bg-surface);"></span>
+                <span class="w-3 h-2.5 inline-block" style="background: #D9C398;"></span>
+                <span class="w-3 h-2.5 inline-block" style="background: var(--accent-ochre);"></span>
+                <span class="w-3 h-2.5 inline-block" style="background: var(--accent-vermilion);"></span>
+              </div>
+              <span>&gt;100% CAP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: RETRY-STORM & METASTABLE FAILURE LAB -->
+      <div id="tab-retry" class="tab-pane hidden flex-1 flex flex-col p-4 gap-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="mono text-xs font-semibold uppercase tracking-wider">
+              DISCRETE-EVENT METASTABLE RETRY STORM SIMULATOR (180-SECOND WINDOW)
+            </h3>
+            <p class="text-xs" style="color: var(--ink-secondary);">
+              Simulates how synchronized cron bursts + client retry backoff policies interact when a downstream dependency experiences a transient brownout.
+            </p>
+          </div>
+          <button id="btnRunRetrySim" class="btn-instrument btn-primary">
+            <span>RE-SAMPLE MONTE CARLO SEED</span>
+          </button>
+        </div>
+
+        <!-- Physics Parameters Control Bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 hairline-border panel-bg">
+          <div>
+            <label for="selectBackoffPolicy" class="block mono text-[10px] uppercase" style="color: var(--ink-secondary);">
+              BACKOFF JITTER STRATEGY
+            </label>
+            <select id="selectBackoffPolicy" class="w-full mt-1 text-xs">
+              <option value="none">Naive Exponential (No Jitter)</option>
+              <option value="full">AWS Full Jitter [0, base*2^n]</option>
+              <option value="equal">Equal Jitter [half + rand]</option>
+              <option value="decorrelated">Decorrelated Jitter (Stateful)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inputFaultDuration" class="block mono text-[10px] uppercase" style="color: var(--ink-secondary);">
+              TRANSIENT FAULT: <span id="labelFaultDur" class="font-semibold">18s</span>
+            </label>
+            <input id="inputFaultDuration" type="range" min="5" max="45" step="1" value="18" class="w-full mt-2" />
+          </div>
+
+          <div>
+            <label for="inputMaxRetries" class="block mono text-[10px] uppercase" style="color: var(--ink-secondary);">
+              MAX CLIENT RETRIES: <span id="labelMaxRetries" class="font-semibold">4</span>
+            </label>
+            <input id="inputMaxRetries" type="range" min="1" max="7" step="1" value="4" class="w-full mt-2" />
+          </div>
+
+          <div>
+            <label for="selectLoadShedding" class="block mono text-[10px] uppercase" style="color: var(--ink-secondary);">
+              SERVER DEFENSE / CIRCUIT
+            </label>
+            <select id="selectLoadShedding" class="w-full mt-1 text-xs">
+              <option value="none">Unbounded Queue (Lock Contention)</option>
+              <option value="lifo_codel">Adaptive LIFO + CoDel Shedding</option>
+              <option value="token_bucket">Retry Token Budget (Max 20%)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dual Trace Canvas for Retry Physics -->
+        <div class="hairline-border p-2 panel-bg">
+          <canvas id="retryStormCanvas" class="w-full block" style="height: 240px;"></canvas>
+        </div>
+
+        <!-- Comparative Strategy Scorecard Table -->
+        <div class="hairline-border p-3 flex-1">
+          <div class="flex items-center justify-between mb-2">
+            <span class="mono text-xs font-semibold uppercase">COMPARATIVE BACKOFF STRATEGY BENCHMARK (SAME FAULT WINDOW)</span>
+            <span class="mono text-[10px]" style="color: var(--ink-secondary);">CLICK ANY ROW TO LOAD STRATEGY</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left mono text-xs">
+              <thead>
+                <tr class="panel-bg hairline-b text-[10px] uppercase" style="color: var(--ink-secondary);">
+                  <th class="py-1.5 px-2">Backoff Algorithm</th>
+                  <th class="py-1.5 px-2 text-right">Peak RPS Load</th>
+                  <th class="py-1.5 px-2 text-right">Retry Amplification</th>
+                  <th class="py-1.5 px-2 text-right">Success Rate</th>
+                  <th class="py-1.5 px-2 text-right">Recovery Time</th>
+                  <th class="py-1.5 px-2">System Verdict</th>
+                </tr>
+              </thead>
+              <tbody id="retryBenchmarkTableBody" class="divide-y" style="border-color: var(--border-hairline);">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: UNIFIED GIT DIFF PATCH & CLI USAGE -->
+      <div id="tab-diff" class="tab-pane hidden flex-1 flex flex-col p-4 gap-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="mono text-xs font-semibold uppercase tracking-wider">
+              DETERMINISTIC DE-ALIGNMENT PATCH (UNIFIED GIT DIFF + K8S YAML)
+            </h3>
+            <p class="text-xs" style="color: var(--ink-secondary);">
+              Preserves exact job frequency while shifting phase offsets via FNV-1a service-name hashing or coprime intervals.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="selectExportFormat" class="text-xs">
+              <option value="git_diff">Unified Git Diff (.patch)</option>
+              <option value="crontab">Annotated Production Crontab</option>
+              <option value="k8s_yaml">Kubernetes CronJob Manifests (.yaml)</option>
+            </select>
+            <button id="btnCopyPatch" class="btn-instrument btn-primary">
+              <span id="copyPatchLabel">COPY ARTIFACT</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-1 hairline-border panel-bg p-3 overflow-auto max-h-[380px]">
+          <pre id="patchOutputPre" class="mono text-xs leading-relaxed whitespace-pre overflow-x-auto"></pre>
+        </div>
+
+        <div class="hairline-border p-3 surface-bg">
+          <div class="mono text-xs font-semibold uppercase mb-1">STANDALONE REPOSITORY CLI (`cronstorm`)</div>
+          <p class="text-xs mb-2" style="color: var(--ink-secondary);">
+            The companion repository archive (<code class="mono">cronstorm-repo.zip</code>) ships a zero-dependency Python 3 CLI and discrete-event engine for CI/CD pre-commit gating:
+          </p>
+          <pre class="mono text-[11px] panel-bg p-2.5 hairline-border overflow-x-auto">python3 cli.py analyze manifests/fintech_prod.cron --pool-cap 120 --dealign fnv_hash --emit-patch</pre>
+        </div>
+      </div>
+
+      <!-- TAB 4: ENGINEERING SPEC & SECOND-PASS CODE REVIEW LOG -->
+      <div id="tab-audit" class="tab-pane hidden flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
+        <div class="hairline-border p-4 surface-bg space-y-3">
+          <div class="mono text-xs font-semibold uppercase tracking-wider hairline-b pb-1.5">
+            01 // WHY SYNCHRONIZED CRONS &amp; NAIVE RETRIES CAUSE PRODUCTION OUTAGES
+          </div>
+          <p class="text-xs leading-relaxed" style="color: var(--ink-secondary);">
+            Human engineers overwhelmingly schedule recurring tasks at <code class="mono">0 * * * *</code>, <code class="mono">*/15 * * * *</code>, or <code class="mono">*/5 * * * *</code>. Across 15+ microservices, the Least Common Multiple (LCM) creates severe constructive interference at <code class="mono">:00</code> and <code class="mono">:30</code>. When concurrent connection demand crosses database pool capacity, queries queue up and time out simultaneously—triggering synchronized client retry waves.
+          </p>
+
+          <div class="mono text-xs font-semibold uppercase tracking-wider hairline-b pb-1.5 pt-2">
+            02 // FNV-1A DETERMINISTIC HASH PHASE SHIFTING
+          </div>
+          <p class="text-xs leading-relaxed" style="color: var(--ink-secondary);">
+            Instead of randomizing at runtime (which complicates observability), <code class="mono">CRONSTORM</code> computes a stateless 32-bit FNV-1a digest of each job's canonical service identifier:
+          </p>
+          <pre class="mono text-[11px] panel-bg p-2.5 hairline-border">phase_offset = (fnv1a_32(service_name) mod (cadence_period - 1)) + 1
+Example: "ledger-reconcile-core" (*/15 * * * *) -> offset 7 -> "7-59/15 * * * *"</pre>
+          <p class="text-xs leading-relaxed" style="color: var(--ink-secondary);">
+            Every job still runs 4 times per hour at strict 15-minute intervals, but the `:00` thundering herd is mathematically dissolved.
+          </p>
+
+          <div class="mono text-xs font-semibold uppercase tracking-wider hairline-b pb-1.5 pt-2">
+            03 // SECOND-PASS CODE REVIEW &amp; VERIFICATION LOG (REV-B)
+          </div>
+          <div class="grid grid-cols-1 gap-2 mono text-[11px]">
+            <div class="p-2.5 panel-bg hairline-border">
+              <div class="font-semibold" style="color: var(--accent-vermilion);">[FIXED IN REV-B] Per-Attempt Retry Cohort Accounting (`engine.py` &amp; `cronstorm.html`)</div>
+              <p class="mt-1 text-[11px]" style="color: var(--ink-secondary);">
+                In Rev-A, failed requests at second <code class="mono">t</code> were aggregated into a single scalar without tracking which attempt cohort (`0..max_retries`) each failure belonged to, and steady-state background load was coupled to un-jittered peak connections. Rev-B separates steady-state background demand (`52%` of pool capacity) from the synchronized cron impulse (`t=20..26s`) and tracks a 2D cohort matrix <code class="mono">retryCohorts[t][attempt]</code> so terminal failures at <code class="mono">attempt == maxRetries</code> drop cleanly.
+              </p>
+            </div>
+            <div class="p-2.5 panel-bg hairline-border">
+              <div class="font-semibold" style="color: var(--accent-vermilion);">[FIXED IN REV-B] CLI Subcommand Ergonomics (`cli.py`)</div>
+              <p class="mt-1 text-[11px]" style="color: var(--ink-secondary);">
+                Aligned <code class="mono">cli.py</code> argument parsing so both <code class="mono">python3 cli.py analyze manifests/fintech_prod.cron</code> and direct path invocation <code class="mono">python3 cli.py manifests/fintech_prod.cron</code> execute identically.
+              </p>
+            </div>
+            <div class="p-2.5 panel-bg hairline-border">
+              <div class="font-semibold" style="color: var(--accent-forest);">[VERIFIED] 5-Field Cron AST &amp; Shifted Range-Step (`a-b/n`) Parser</div>
+              <p class="mt-1 text-[11px]" style="color: var(--ink-secondary);">
+                Confirmed 96/96 daily firing invariant for <code class="mono">*/15 * * * *</code> vs shifted <code class="mono">7-59/15 * * * *</code> across all 1,440 minutes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- FOOTER STATUS BAR -->
+  <footer class="hairline-t panel-bg px-4 py-1.5 flex flex-wrap items-center justify-between text-[11px] mono" style="color: var(--ink-secondary);">
+    <div class="flex items-center gap-4">
+      <span id="footerStatusText">STATUS: READY // 14 WORKLOADS LOADED</span>
+      <span>ENGINE: DETERMINISTIC MINUTE-CONVOLUTION + COHORT-PRNG-32</span>
+    </div>
+    <div>
+      <span>NO EXTERNAL TELEMETRY // 100% LOCAL IN-BROWSER EXECUTION</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. PRESET PRODUCTION MANIFESTS
+      // =========================================================================
+      const PRESETS = {
+        fintech: {
+          poolCap: 120,
+          jobs: [
+            { id: 'j1', name: 'ach-settlement-batch', cron: '0 * * * *', origCron: '0 * * * *', conns: 28, duration: 4 },
+            { id: 'j2', name: 'ledger-reconcile-core', cron: '*/15 * * * *', origCron: '*/15 * * * *', conns: 22, duration: 3 },
+            { id: 'j3', name: 'stripe-webhook-replay', cron: '*/5 * * * *', origCron: '*/5 * * * *', conns: 16, duration: 2 },
+            { id: 'j4', name: 'fx-rate-oracle-sync', cron: '*/10 * * * *', origCron: '*/10 * * * *', conns: 14, duration: 2 },
+            { id: 'j5', name: 'kyc-sanctions-screen', cron: '0 */2 * * *', origCron: '0 */2 * * *', conns: 25, duration: 5 },
+            { id: 'j6', name: 'card-auth-hold-expiry', cron: '*/5 * * * *', origCron: '*/5 * * * *', conns: 18, duration: 2 },
+            { id: 'j7', name: 'treasury-sweep-calc', cron: '0 0,6,12,18 * * *', origCron: '0 0,6,12,18 * * *', conns: 32, duration: 6 },
+            { id: 'j8', name: 'fraud-velocity-rollup', cron: '*/15 * * * *', origCron: '*/15 * * * *', conns: 20, duration: 3 },
+            { id: 'j9', name: 'merchant-payout-queue', cron: '0 * * * *', origCron: '0 * * * *', conns: 24, duration: 4 },
+            { id: 'j10', name: 'chargeback-evidence-gen', cron: '0 */4 * * *', origCron: '0 */4 * * *', conns: 19, duration: 5 },
+            { id: 'j11', name: 'tax-withholding-audit', cron: '*/30 * * * *', origCron: '*/30 * * * *', conns: 15, duration: 3 },
+            { id: 'j12', name: 'session-token-compactor', cron: '*/10 * * * *', origCron: '*/10 * * * *', conns: 12, duration: 1 },
+            { id: 'j13', name: 'wire-swift-ack-poller', cron: '*/5 * * * *', origCron: '*/5 * * * *', conns: 14, duration: 2 },
+            { id: 'j14', name: 'regulatory-gl-snapshot', cron: '0 0 * * *', origCron: '0 0 * * *', conns: 38, duration: 8 }
+          ]
+        },
+        k8s_fleet: {
+          poolCap: 150,
+          jobs: [
+            { id: 'k1', name: 'cert-manager-renew-check', cron: '0 */6 * * *', origCron: '0 */6 * * *', conns: 18, duration: 3 },
+            { id: 'k2', name: 'ecr-image-vuln-scanner', cron: '*/15 * * * *', origCron: '*/15 * * * *', conns: 26, duration: 4 },
+            { id: 'k3', name: 'prometheus-thanos-compact', cron: '0 * * * *', origCron: '0 * * * *', conns: 30, duration: 5 },
+            { id: 'k4', name: 'etcd-snapshot-s3-upload', cron: '*/30 * * * *', origCron: '*/30 * * * *', conns: 22, duration: 3 },
+            { id: 'k5', name: 'kubecost-allocation-agg', cron: '*/15 * * * *', origCron: '*/15 * * * *', conns: 24, duration: 3 },
+            { id: 'k6', name: 'argocd-repo-hard-refresh', cron: '*/5 * * * *', origCron: '*/5 * * * *', conns: 19, duration: 2 },
+            { id: 'k7', name: 'rds-pg-stat-reset-collector', cron: '0 * * * *', origCron: '0 * * * *', conns: 21, duration: 2 },
+            { id: 'k8', name: 'opensearch-index-rollover', cron: '0 */2 * * *', origCron: '0 */2 * * *', conns: 28, duration: 4 },
+            { id: 'k9', name: 'stale-namespace-reaper', cron: '*/20 * * * *', origCron: '*/20 * * * *', conns: 15, duration: 2 },
+            { id: 'k10', name: 'clickhouse-part-merger', cron: '*/10 * * * *', origCron: '*/10 * * * *', conns: 25, duration: 3 },
+            { id: 'k11', name: 'vault-lease-revocation-gc', cron: '*/15 * * * *', origCron: '*/15 * * * *', conns: 20, duration: 2 },
+            { id: 'k12', name: 'billing-cur-parquet-ingest', cron: '0 */3 * * *', origCron: '0 */3 * * *', conns: 34, duration: 6 }
+          ]
+        },
+        ml_pipeline: {
+          poolCap: 100,
+          jobs: [
+            { id: 'm1', name: 'feast-online-store-materialize', cron: '*/10 * * * *', origCron: '*/10 * * * *', conns: 28, duration: 3 },
+            { id: 'm2', name: 'snowflake-dbt-core-models', cron: '0 * * * *', origCron: '0 * * * *', conns: 35, duration: 6 },
+            { id: 'm3', name: 'qdrant-vector-hnsw-reindex', cron: '0 */4 * * *', origCron: '0 */4 * * *', conns: 30, duration: 5 },
+            { id: 'm4', name: 'clickstream-session-stitch', cron: '*/15 * * * *', origCron: '*/15 * * * *', conns: 22, duration: 3 },
+            { id: 'm5', name: 'ab-test-cuped-variance-calc', cron: '0 */2 * * *', origCron: '0 */2 * * *', conns: 26, duration: 4 },
+            { id: 'm6', name: 'catalog-embedding-backfill', cron: '*/30 * * * *', origCron: '*/30 * * * *', conns: 24, duration: 4 },
+            { id: 'm7', name: 'model-drift-ks-test-runner', cron: '0 * * * *', origCron: '0 * * * *', conns: 18, duration: 3 },
+            { id: 'm8', name: 'feature-ttl-eviction-sweep', cron: '*/15 * * * *', origCron: '*/15 * * * *', conns: 16, duration: 2 }
+          ]
+        }
+      };
+
+      // =========================================================================
+      // 2. APPLICATION STATE
+      // =========================================================================
+      const state = {
+        presetKey: 'fintech',
+        poolCap: 120,
+        spreadStrategy: 'fnv_hash',
+        selectedMinute: 0,
+        searchQuery: '',
+        collisionFilter: 'all',
+        jobs: [],
+        baselineTimeline: new Array(1440).fill(0),
+        currentTimeline: new Array(1440).fill(0),
+        minuteJobsMap: Array.from({ length: 1440 }, () => []),
+        // Retry simulator state
+        backoffPolicy: 'none',
+        faultDuration: 18,
+        maxRetries: 4,
+        loadShedding: 'none',
+        simSeed: 133742,
+        exportFormat: 'git_diff',
+        darkMode: false
+      };
+
+      // =========================================================================
+      // 3. DETERMINISTIC HASH & CRON PARSER / OPTIMIZER ENGINE
+      // =========================================================================
+      function fnv1a32(str) {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i);
+          h = Math.imul(h, 0x01000193);
+        }
+        return h >>> 0;
+      }
+
+      function mulberry32(seed) {
+        let a = seed >>> 0;
+        return function () {
+          a |= 0;
+          a = (a + 0x6D2B79F5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function parseCronField(fieldStr, minVal, maxVal) {
+        const result = new Set();
+        const parts = fieldStr.trim().split(',');
+        for (const part of parts) {
+          if (!part) continue;
+          let rangePart = part;
+          let step = 1;
+          if (part.includes('/')) {
+            const splitStep = part.split('/');
+            rangePart = splitStep[0];
+            step = parseInt(splitStep[1], 10);
+            if (isNaN(step) || step <= 0) step = 1;
+          }
+
+          let start = minVal;
+          let end = maxVal;
+
+          if (rangePart === '*') {
+            start = minVal;
+            end = maxVal;
+          } else if (rangePart.includes('-')) {
+            const [s, e] = rangePart.split('-').map(n => parseInt(n, 10));
+            if (!isNaN(s) && !isNaN(e) && s <= e) {
+              start = Math.max(minVal, Math.min(maxVal, s));
+              end = Math.max(minVal, Math.min(maxVal, e));
+            } else {
+              return null;
+            }
+          } else {
+            const single = parseInt(rangePart, 10);
+            if (!isNaN(single) && single >= minVal && single <= maxVal) {
+              start = single;
+              end = part.includes('/') ? maxVal : single;
+            } else {
+              return null;
+            }
+          }
+
+          for (let v = start; v <= end; v += step) {
+            result.add(v);
+          }
+        }
+        return result.size > 0 ? result : null;
+      }
+
+      function expandCronToDayMinutes(cronExpr) {
+        let normalized = cronExpr.trim();
+        if (normalized === '@hourly') normalized = '0 * * * *';
+        if (normalized === '@daily' || normalized === '@midnight') normalized = '0 0 * * *';
+
+        const tokens = normalized.split(/\s+/);
+        if (tokens.length < 5) return null;
+
+        const minSet = parseCronField(tokens[0], 0, 59);
+        const hourSet = parseCronField(tokens[1], 0, 23);
+        if (!minSet || !hourSet) return null;
+
+        const firingMinutes = [];
+        for (let h = 0; h < 24; h++) {
+          if (!hourSet.has(h)) continue;
+          for (let m = 0; m < 60; m++) {
+            if (minSet.has(m)) {
+              firingMinutes.push(h * 60 + m);
+            }
+          }
+        }
+        return firingMinutes;
+      }
+
+      function computeTimeline(jobsList, useOrig) {
+        const timeline = new Array(1440).fill(0);
+        const minuteMap = Array.from({ length: 1440 }, () => []);
+
+        for (const job of jobsList) {
+          const expr = useOrig ? job.origCron : job.cron;
+          const starts = expandCronToDayMinutes(expr) || [];
+          const dur = Math.max(1, Math.min(60, parseInt(job.duration, 10) || 1));
+          const conns = Math.max(1, parseInt(job.conns, 10) || 10);
+
+          for (const startMin of starts) {
+            for (let d = 0; d < dur; d++) {
+              const targetMin = (startMin + d) % 1440;
+              timeline[targetMin] += conns;
+              if (!useOrig) {
+                minuteMap[targetMin].push({
+                  id: job.id,
+                  name: job.name,
+                  cron: job.cron,
+                  origCron: job.origCron,
+                  conns: conns,
+                  duration: dur,
+                  isStart: d === 0
+                });
+              }
+            }
+          }
+        }
+        return { timeline, minuteMap };
+      }
+
+      function dealignJobCron(job, index, strategy, runningTimeline) {
+        const orig = job.origCron.trim();
+        const tokens = orig.split(/\s+/);
+        if (tokens.length < 5) return orig;
+
+        const [minField, hourField, dom, mon, dow] = tokens;
+        const hashVal = fnv1a32(job.name + ':' + index);
+
+        if (minField.startsWith('*/')) {
+          const period = parseInt(minField.slice(2), 10);
+          if (period > 1 && period <= 30) {
+            let offset = 0;
+            if (strategy === 'fnv_hash') {
+              offset = (hashVal % (period - 1)) + 1;
+            } else if (strategy === 'coprime') {
+              offset = ((index * 7 + 3) % (period - 1)) + 1;
+            } else {
+              let bestOffset = 0;
+              let bestPeak = Infinity;
+              for (let cand = 0; cand < period; cand++) {
+                const candidateCron = `${cand}-59/${period} ${hourField} ${dom} ${mon} ${dow}`;
+                const mins = expandCronToDayMinutes(candidateCron) || [];
+                let worst = 0;
+                for (const m of mins) {
+                  for (let d = 0; d < job.duration; d++) {
+                    worst = Math.max(worst, runningTimeline[(m + d) % 1440] + job.conns);
+                  }
+                }
+                if (worst < bestPeak) {
+                  bestPeak = worst;
+                  bestOffset = cand;
+                }
+              }
+              offset = bestOffset;
+            }
+            return `${offset}-59/${period} ${hourField} ${dom} ${mon} ${dow}`;
+          }
+        }
+
+        if (/^\d+$/.test(minField)) {
+          let newMin = 0;
+          if (strategy === 'fnv_hash') {
+            newMin = (hashVal % 53) + 3;
+          } else if (strategy === 'coprime') {
+            newMin = ((index * 13 + 5) % 55) + 2;
+          } else {
+            let bestMin = parseInt(minField, 10);
+            let bestPeak = Infinity;
+            for (let cand = 1; cand < 58; cand++) {
+              const candidateCron = `${cand} ${hourField} ${dom} ${mon} ${dow}`;
+              const mins = expandCronToDayMinutes(candidateCron) || [];
+              let worst = 0;
+              for (const m of mins) {
+                for (let d = 0; d < job.duration; d++) {
+                  worst = Math.max(worst, runningTimeline[(m + d) % 1440] + job.conns);
+                }
+              }
+              if (worst < bestPeak) {
+                bestPeak = worst;
+                bestMin = cand;
+              }
+            }
+            newMin = bestMin;
+          }
+
+          const hourStepMatch = hourField.match(/^\*\/(\d+)$/);
+          let newHourField = hourField;
+          if (hourStepMatch) {
+            const hPeriod = parseInt(hourStepMatch[1], 10);
+            if (hPeriod > 1 && hPeriod <= 12) {
+              const hOffset = (hashVal >>> 8) % hPeriod;
+              newHourField = `${hOffset}-23/${hPeriod}`;
+            }
+          }
+          return `${newMin} ${newHourField} ${dom} ${mon} ${dow}`;
+        }
+
+        return orig;
+      }
+
+      function applyAutoDealignAll() {
+        const runningTimeline = new Array(1440).fill(0);
+        const indexedJobs = state.jobs.map((j, idx) => ({ job: j, idx }));
+        indexedJobs.sort((a, b) => (b.job.conns * b.job.duration) - (a.job.conns * a.job.duration));
+
+        for (const item of indexedJobs) {
+          const newCron = dealignJobCron(item.job, item.idx, state.spreadStrategy, runningTimeline);
+          item.job.cron = newCron;
+          const starts = expandCronToDayMinutes(newCron) || [];
+          for (const s of starts) {
+            for (let d = 0; d < item.job.duration; d++) {
+              runningTimeline[(s + d) % 1440] += item.job.conns;
+            }
+          }
+        }
+        recomputeAllAndRender();
+      }
+
+      // =========================================================================
+      // 4. DISCRETE-EVENT RETRY STORM SIMULATOR (REV-B COHORT ENGINE)
+      // =========================================================================
+      function simulateRetryPolicy(policyName, faultDurSec, maxRetries, sheddingMode, seed) {
+        const rng = mulberry32(seed);
+        const totalSeconds = 180;
+        const faultStart = 20;
+        const faultEnd = faultStart + faultDurSec;
+
+        const peakConns = Math.max(...state.currentTimeline, 40);
+        const serverCapRps = Math.max(20, Math.round(state.poolCap * 0.85));
+        // Steady-state baseline demand is 52% of server capacity
+        const baseRps = Math.max(10, Math.round(serverCapRps * 0.52));
+        // Synchronized cron burst at t=20..26 scales with active peak concurrency
+        const cronBurstRps = Math.max(20, Math.round(peakConns * 0.45));
+
+        const primaryArrivals = new Array(totalSeconds).fill(0);
+        const retryCohorts = Array.from({ length: totalSeconds }, () => new Array(maxRetries + 1).fill(0));
+        const retryArrivals = new Array(totalSeconds).fill(0);
+        const completedRps = new Array(totalSeconds).fill(0);
+        const droppedRps = new Array(totalSeconds).fill(0);
+
+        let totalPrimary = 0;
+        let totalRetries = 0;
+        let totalSuccess = 0;
+
+        for (let t = 0; t < totalSeconds; t++) {
+          const cronPulse = (t >= 20 && t <= 26) ? cronBurstRps : 0;
+          const noise = Math.round((rng() - 0.5) * 4);
+          primaryArrivals[t] = Math.max(10, baseRps + cronPulse + noise);
+          totalPrimary += primaryArrivals[t];
+        }
+
+        let contentionPenalty = 0.0;
+
+        for (let t = 0; t < totalSeconds; t++) {
+          const incPrimary = primaryArrivals[t];
+          const cohortRow = retryCohorts[t].slice();
+          let incRetriesTotal = 0;
+          for (let a = 1; a <= maxRetries; a++) {
+            incRetriesTotal += cohortRow[a];
+          }
+
+          if (sheddingMode === 'token_bucket' && incRetriesTotal > 0) {
+            const maxAllowed = Math.ceil(incPrimary * 0.20);
+            if (incRetriesTotal > maxAllowed) {
+              const keepRatio = maxAllowed / incRetriesTotal;
+              incRetriesTotal = 0;
+              for (let a = 1; a <= maxRetries; a++) {
+                cohortRow[a] = Math.floor(cohortRow[a] * keepRatio);
+                incRetriesTotal += cohortRow[a];
+              }
+            }
+          }
+
+          retryArrivals[t] = incRetriesTotal;
+          const totalIncoming = incPrimary + incRetriesTotal;
+
+          let effectiveCap = serverCapRps;
+          if (t >= faultStart && t < faultEnd) {
+            effectiveCap = Math.max(5, Math.round(serverCapRps * 0.12));
+            contentionPenalty = 0.0;
+          } else {
+            if (totalIncoming > serverCapRps * 1.65 && sheddingMode === 'none') {
+              contentionPenalty = Math.min(0.72, contentionPenalty + 0.55);
+            } else if (sheddingMode === 'lifo_codel') {
+              contentionPenalty = Math.max(0.0, contentionPenalty - 0.35);
+            } else {
+              contentionPenalty = Math.max(0.0, contentionPenalty - 0.25);
+            }
+            effectiveCap = Math.max(15, Math.round(serverCapRps * (1.0 - contentionPenalty)));
+          }
+
+          const served = Math.min(totalIncoming, effectiveCap);
+          const failedNow = Math.max(0, totalIncoming - served);
+
+          completedRps[t] = served;
+          droppedRps[t] = failedNow;
+          totalSuccess += served;
+
+          if (failedNow > 0 && totalIncoming > 0) {
+            const failRatio = failedNow / totalIncoming;
+            for (let att = 0; att < maxRetries; att++) {
+              const cohortSize = att === 0 ? incPrimary : cohortRow[att];
+              const failedInCohort = Math.round(cohortSize * failRatio);
+              if (failedInCohort <= 0) continue;
+
+              const nextAtt = att + 1;
+              const baseDelay = Math.pow(2, nextAtt);
+
+              for (let r = 0; r < failedInCohort; r++) {
+                let delaySec = baseDelay;
+                if (policyName === 'none') {
+                  delaySec = baseDelay;
+                } else if (policyName === 'equal') {
+                  const half = Math.max(2, baseDelay);
+                  delaySec = half + Math.floor(rng() * (baseDelay * 2 + 1));
+                } else if (policyName === 'full') {
+                  delaySec = 1 + Math.floor(rng() * (baseDelay * 4));
+                } else if (policyName === 'decorrelated') {
+                  delaySec = 2 + Math.floor(rng() * (baseDelay * 5));
+                }
+
+                const targetSec = t + delaySec;
+                if (targetSec < totalSeconds) {
+                  retryCohorts[targetSec][nextAtt] += 1;
+                  totalRetries += 1;
+                }
+              }
+            }
+          }
+        }
+
+        let recoverySec = 0;
+        for (let t = faultEnd; t < totalSeconds; t++) {
+          const totalLoad = primaryArrivals[t] + retryArrivals[t];
+          if (droppedRps[t] > baseRps * 0.05 || totalLoad > serverCapRps * 1.05) {
+            recoverySec = t - faultEnd + 1;
+          }
+        }
+
+        const peakTotalLoad = Math.max(...primaryArrivals.map((p, i) => p + retryArrivals[i]));
+        const amplification = (totalPrimary + totalRetries) / Math.max(1, totalPrimary);
+        const successRate = Math.min(100, (totalSuccess / Math.max(1, totalPrimary)) * 100);
+
+        return {
+          policyName,
+          serverCapRps,
+          faultStart,
+          faultEnd,
+          primaryArrivals,
+          retryArrivals,
+          completedRps,
+          droppedRps,
+          peakTotalLoad,
+          amplification,
+          successRate,
+          recoverySec
+        };
+      }
+
+      // =========================================================================
+      // 5. CANVAS OSCILLOSCOPE RENDERERS
+      // =========================================================================
+      function formatMinToHHMM(minIndex) {
+        const m = ((minIndex % 1440) + 1440) % 1440;
+        const hh = String(Math.floor(m / 60)).padStart(2, '0');
+        const mm = String(m % 60).padStart(2, '0');
+        return `${hh}:${mm}`;
+      }
+
+      function renderCollisionCanvas() {
+        const canvas = document.getElementById('collisionCanvas');
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const width = Math.max(320, Math.floor(rect.width));
+        const height = 230;
+
+        if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+          canvas.width = width * dpr;
+          canvas.height = height * dpr;
+        }
+
+        const ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.scale(dpr, dpr);
+
+        const styles = getComputedStyle(document.documentElement);
+        const bgSurface = styles.getPropertyValue('--bg-surface').trim() || '#FFFFFF';
+        const inkPrimary = styles.getPropertyValue('--ink-primary').trim() || '#161615';
+        const inkMuted = styles.getPropertyValue('--ink-muted').trim() || '#85837E';
+        const traceGrid = styles.getPropertyValue('--trace-grid').trim() || '#E5E1D8';
+        const vermilion = styles.getPropertyValue('--accent-vermilion').trim() || '#C83E2B';
+        const forest = styles.getPropertyValue('--accent-forest').trim() || '#1E6B4B';
+
+        ctx.fillStyle = bgSurface;
+        ctx.fillRect(0, 0, width, height);
+
+        const padL = 44;
+        const padR = 16;
+        const padT = 18;
+        const padB = 26;
+        const plotW = width - padL - padR;
+        const plotH = height - padT - padB;
+
+        const maxVal = Math.max(state.poolCap * 1.35, ...state.baselineTimeline, ...state.currentTimeline, 60);
+
+        ctx.strokeStyle = traceGrid;
+        ctx.lineWidth = 1;
+        ctx.font = '10px "IBM Plex Mono", monospace';
+        ctx.fillStyle = inkMuted;
+        ctx.textAlign = 'right';
+
+        const ySteps = 4;
+        for (let i = 0; i <= ySteps; i++) {
+          const val = Math.round((maxVal / ySteps) * i);
+          const y = padT + plotH - (val / maxVal) * plotH;
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+          ctx.fillText(String(val), padL - 6, y + 3);
+        }
+
+        ctx.textAlign = 'center';
+        for (let h = 0; h <= 24; h += 2) {
+          const x = padL + (h / 24) * plotW;
+          ctx.beginPath();
+          ctx.moveTo(x, padT);
+          ctx.lineTo(x, padT + plotH);
+          ctx.stroke();
+          if (h < 24) {
+            ctx.fillText(String(h).padStart(2, '0') + ':00', x, height - 8);
+          }
+        }
+
+        const hasModified = state.jobs.some(j => j.cron.trim() !== j.origCron.trim());
+        if (hasModified) {
+          ctx.strokeStyle = inkMuted;
+          ctx.globalAlpha = 0.35;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          for (let m = 0; m < 1440; m++) {
+            const x = padL + (m / 1439) * plotW;
+            const y = padT + plotH - (state.baselineTimeline[m] / maxVal) * plotH;
+            if (m === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          ctx.globalAlpha = 1.0;
+        }
+
+        ctx.lineWidth = 1.25;
+        for (let m = 0; m < 1440; m++) {
+          const val = state.currentTimeline[m];
+          if (val <= 0) continue;
+          const x = padL + (m / 1439) * plotW;
+          const y = padT + plotH - (val / maxVal) * plotH;
+          ctx.strokeStyle = val > state.poolCap ? vermilion : inkPrimary;
+          ctx.beginPath();
+          ctx.moveTo(x, padT + plotH);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+
+        const capY = padT + plotH - (state.poolCap / maxVal) * plotH;
+        ctx.strokeStyle = vermilion;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.moveTo(padL, capY);
+        ctx.lineTo(padL + plotW, capY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = vermilion;
+        ctx.textAlign = 'left';
+        ctx.fillText(`POOL CAP (${state.poolCap} CONNS)`, padL + 6, Math.max(12, capY - 5));
+
+        const selX = padL + (state.selectedMinute / 1439) * plotW;
+        ctx.strokeStyle = forest;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(selX, padT);
+        ctx.lineTo(selX, padT + plotH);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function renderRetryStormCanvas() {
+        const canvas = document.getElementById('retryStormCanvas');
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const width = Math.max(320, Math.floor(rect.width));
+        const height = 240;
+
+        if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+          canvas.width = width * dpr;
+          canvas.height = height * dpr;
+        }
+
+        const sim = simulateRetryPolicy(
+          state.backoffPolicy,
+          state.faultDuration,
+          state.maxRetries,
+          state.loadShedding,
+          state.simSeed
+        );
+
+        const ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.scale(dpr, dpr);
+
+        const styles = getComputedStyle(document.documentElement);
+        const bgSurface = styles.getPropertyValue('--bg-surface').trim() || '#FFFFFF';
+        const inkPrimary = styles.getPropertyValue('--ink-primary').trim() || '#161615';
+        const inkMuted = styles.getPropertyValue('--ink-muted').trim() || '#85837E';
+        const traceGrid = styles.getPropertyValue('--trace-grid').trim() || '#E5E1D8';
+        const vermilion = styles.getPropertyValue('--accent-vermilion').trim() || '#C83E2B';
+        const forest = styles.getPropertyValue('--accent-forest').trim() || '#1E6B4B';
+        const ochre = styles.getPropertyValue('--accent-ochre').trim() || '#B87314';
+
+        ctx.fillStyle = bgSurface;
+        ctx.fillRect(0, 0, width, height);
+
+        const padL = 44;
+        const padR = 16;
+        const padT = 20;
+        const padB = 26;
+        const plotW = width - padL - padR;
+        const plotH = height - padT - padB;
+
+        const maxRps = Math.max(sim.serverCapRps * 2.2, sim.peakTotalLoad * 1.1, 150);
+
+        const faultX1 = padL + (sim.faultStart / 179) * plotW;
+        const faultX2 = padL + (sim.faultEnd / 179) * plotW;
+        ctx.fillStyle = 'rgba(200, 62, 43, 0.12)';
+        ctx.fillRect(faultX1, padT, faultX2 - faultX1, plotH);
+
+        ctx.strokeStyle = traceGrid;
+        ctx.lineWidth = 1;
+        ctx.font = '10px "IBM Plex Mono", monospace';
+        ctx.fillStyle = inkMuted;
+        ctx.textAlign = 'right';
+
+        for (let i = 0; i <= 4; i++) {
+          const val = Math.round((maxRps / 4) * i);
+          const y = padT + plotH - (val / maxRps) * plotH;
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+          ctx.fillText(String(val), padL - 6, y + 3);
+        }
+
+        ctx.textAlign = 'center';
+        for (let s = 0; s <= 180; s += 30) {
+          const x = padL + (s / 180) * plotW;
+          ctx.beginPath();
+          ctx.moveTo(x, padT);
+          ctx.lineTo(x, padT + plotH);
+          ctx.stroke();
+          ctx.fillText(`t=${s}s`, x, height - 8);
+        }
+
+        const capY = padT + plotH - (sim.serverCapRps / maxRps) * plotH;
+        ctx.strokeStyle = inkMuted;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(padL, capY);
+        ctx.lineTo(padL + plotW, capY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = vermilion;
+        ctx.lineWidth = 1.75;
+        ctx.beginPath();
+        for (let s = 0; s < 180; s++) {
+          const total = sim.primaryArrivals[s] + sim.retryArrivals[s];
+          const x = padL + (s / 179) * plotW;
+          const y = padT + plotH - (total / maxRps) * plotH;
+          if (s === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = ochre;
+        ctx.lineWidth = 1.25;
+        ctx.beginPath();
+        for (let s = 0; s < 180; s++) {
+          const r = sim.retryArrivals[s];
+          const x = padL + (s / 179) * plotW;
+          const y = padT + plotH - (r / maxRps) * plotH;
+          if (s === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = forest;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let s = 0; s < 180; s++) {
+          const ok = sim.completedRps[s];
+          const x = padL + (s / 179) * plotW;
+          const y = padT + plotH - (ok / maxRps) * plotH;
+          if (s === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = vermilion;
+        ctx.fillText(`FAULT WINDOW (${sim.faultStart}s–${sim.faultEnd}s)`, faultX1 + 4, padT + 12);
+        ctx.fillStyle = inkPrimary;
+        ctx.fillText('RED: Total Demand (Primary+Retries)   OCHRE: Retry Wave   GREEN: Goodput (200 OK)', padL + 6, padT - 5);
+
+        ctx.restore();
+      }
+
+      // =========================================================================
+      // 6. UI RENDERING & STATE SYNCHRONIZATION
+      // =========================================================================
+      function recomputeAllAndRender() {
+        const baseRes = computeTimeline(state.jobs, true);
+        const currRes = computeTimeline(state.jobs, false);
+        state.baselineTimeline = baseRes.timeline;
+        state.currentTimeline = currRes.timeline;
+        state.minuteJobsMap = currRes.minuteMap;
+
+        updateTelemetryStrip();
+        renderJobsTable();
+        renderCollisionHotspots();
+        renderCollisionCanvas();
+        renderMinuteInspector();
+        renderModulo60Grid();
+        renderRetryBenchmarkTable();
+        renderRetryStormCanvas();
+        renderPatchOutput();
+      }
+
+      function updateTelemetryStrip() {
+        let peakConn = 0;
+        let peakMin = 0;
+        let overloadMins = 0;
+        let sumConn = 0;
+
+        for (let m = 0; m < 1440; m++) {
+          const c = state.currentTimeline[m];
+          sumConn += c;
+          if (c > peakConn) {
+            peakConn = c;
+            peakMin = m;
+          }
+          if (c > state.poolCap) {
+            overloadMins++;
+          }
+        }
+
+        const basePeak = Math.max(...state.baselineTimeline, 1);
+        const meanConn = Math.max(1, sumConn / 1440);
+        const crestFactor = (peakConn / meanConn).toFixed(1);
+        const poolPct = Math.round((peakConn / state.poolCap) * 100);
+
+        document.getElementById('metricPeakConn').textContent = String(peakConn);
+        document.getElementById('metricPeakTimestamp').textContent = `@ ${formatMinToHHMM(peakMin)} UTC`;
+        document.getElementById('metricPoolPct').textContent = `${poolPct}%`;
+        document.getElementById('metricPoolCapLabel').textContent = `of ${state.poolCap} cap`;
+
+        const poolStatusEl = document.getElementById('metricPoolStatus');
+        if (peakConn > state.poolCap) {
+          poolStatusEl.textContent = `EXHAUSTED (+${peakConn - state.poolCap} OVER)`;
+          poolStatusEl.style.color = 'var(--accent-vermilion)';
+        } else if (poolPct >= 80) {
+          poolStatusEl.textContent = 'HIGH UTILIZATION';
+          poolStatusEl.style.color = 'var(--accent-ochre)';
+        } else {
+          poolStatusEl.textContent = 'NOMINAL HEADROOM';
+          poolStatusEl.style.color = 'var(--accent-forest)';
+        }
+
+        document.getElementById('metricOverloadMinutes').textContent = String(overloadMins);
+        const multiAligned = state.minuteJobsMap.filter(arr => arr.length >= 3).length;
+        document.getElementById('metricTopCluster').textContent = `${multiAligned} mins w/ ≥3 jobs`;
+
+        document.getElementById('metricCrestFactor').textContent = `${crestFactor}x`;
+        const impEl = document.getElementById('metricImprovementNote');
+        if (peakConn < basePeak) {
+          const dropPct = Math.round(((basePeak - peakConn) / basePeak) * 100);
+          impEl.textContent = `-${dropPct}% vs baseline (${basePeak})`;
+          impEl.style.color = 'var(--accent-forest)';
+        } else {
+          impEl.textContent = 'Unmodified baseline';
+          impEl.style.color = 'var(--ink-secondary)';
+        }
+
+        const sim = simulateRetryPolicy(
+          state.backoffPolicy,
+          state.faultDuration,
+          state.maxRetries,
+          state.loadShedding,
+          state.simSeed
+        );
+        document.getElementById('metricRetryAmp').textContent = `${sim.amplification.toFixed(2)}x`;
+        const policyLabels = {
+          none: 'Policy: Naive (No Jitter)',
+          full: 'Policy: AWS Full Jitter',
+          equal: 'Policy: Equal Jitter',
+          decorrelated: 'Policy: Decorrelated'
+        };
+        document.getElementById('metricRetryPolicyLabel').textContent = policyLabels[state.backoffPolicy] || '';
+        document.getElementById('metricRecoveryTime').textContent = `${sim.recoverySec}s`;
+
+        const metaEl = document.getElementById('metricMetastableState');
+        if (sim.recoverySec >= 25) {
+          metaEl.textContent = 'METASTABLE OSCILLATION';
+          metaEl.style.color = 'var(--accent-vermilion)';
+        } else if (sim.recoverySec >= 10) {
+          metaEl.textContent = 'DAMPED TAIL SPIKES';
+          metaEl.style.color = 'var(--accent-ochre)';
+        } else {
+          metaEl.textContent = 'FAST CONVERGENCE';
+          metaEl.style.color = 'var(--accent-forest)';
+        }
+
+        document.getElementById('footerStatusText').textContent =
+          `STATUS: ACTIVE // ${state.jobs.length} WORKLOADS // PEAK ${peakConn} CONNS @ ${formatMinToHHMM(peakMin)}`;
+      }
+
+      function renderJobsTable() {
+        const tbody = document.getElementById('jobsTableBody');
+        tbody.innerHTML = '';
+
+        const collidingJobIds = new Set();
+        for (let m = 0; m < 1440; m++) {
+          if (state.currentTimeline[m] > state.poolCap || state.minuteJobsMap[m].length >= 4) {
+            for (const item of state.minuteJobsMap[m]) {
+              collidingJobIds.add(item.id);
+            }
+          }
+        }
+
+        const q = state.searchQuery.trim().toLowerCase();
+        const filtered = state.jobs.filter(job => {
+          if (q && !job.name.toLowerCase().includes(q) && !job.cron.toLowerCase().includes(q)) {
+            return false;
+          }
+          if (state.collisionFilter === 'colliding' && !collidingJobIds.has(job.id)) {
+            return false;
+          }
+          if (state.collisionFilter === 'modified' && job.cron.trim() === job.origCron.trim()) {
+            return false;
+          }
+          return true;
+        });
+
+        for (let i = 0; i < filtered.length; i++) {
+          const job = filtered[i];
+          const isModified = job.cron.trim() !== job.origCron.trim();
+          const isColliding = collidingJobIds.has(job.id);
+          const tr = document.createElement('tr');
+          tr.className = 'surface-bg hover:opacity-95';
+
+          tr.innerHTML = `
+            <td class="py-2 px-2.5">
+              <div class="flex items-center gap-1.5">
+                <span class="status-dot" style="background-color: ${isColliding ? 'var(--accent-vermilion)' : 'var(--accent-forest)'};"></span>
+                <span class="mono text-xs font-medium">${escapeHtml(job.name)}</span>
+              </div>
+              ${isModified ? `<div class="mono text-[10px]" style="color: var(--accent-forest);">orig: ${escapeHtml(job.origCron)}</div>` : ''}
+            </td>
+            <td class="py-2 px-2">
+              <input type="text" data-job-id="${job.id}" data-field="cron" value="${escapeHtml(job.cron)}"
+                class="job-input w-32 text-xs py-0.5 px-1.5" />
+            </td>
+            <td class="py-2 px-2 text-right">
+              <input type="number" min="1" max="200" data-job-id="${job.id}" data-field="conns" value="${job.conns}"
+                class="job-input w-14 text-right text-xs py-0.5 px-1" />
+            </td>
+            <td class="py-2 px-2 text-right mono text-xs" style="color: var(--ink-secondary);">
+              ${job.duration}m
+            </td>
+            <td class="py-2 px-2 text-center">
+              <div class="inline-flex items-center gap-1">
+                <button data-action="jitter-one" data-job-id="${job.id}" class="btn-instrument py-0.5 px-1.5 text-[10px]" title="De-align this schedule">
+                  OFFSET
+                </button>
+                <button data-action="delete-one" data-job-id="${job.id}" class="btn-instrument py-0.5 px-1.5 text-[10px]" title="Remove job">
+                  &times;
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+
+      function renderCollisionHotspots() {
+        const container = document.getElementById('collisionHotspotsList');
+        container.innerHTML = '';
+
+        const ranked = [];
+        for (let m = 0; m < 1440; m++) {
+          if (state.currentTimeline[m] > 0) {
+            ranked.push({ minute: m, conns: state.currentTimeline[m], count: state.minuteJobsMap[m].length });
+          }
+        }
+        ranked.sort((a, b) => b.conns - a.conns || b.count - a.count);
+
+        const picked = [];
+        for (const cand of ranked) {
+          if (picked.length >= 6) break;
+          if (!picked.some(p => Math.abs(p.minute - cand.minute) < 5)) {
+            picked.push(cand);
+          }
+        }
+
+        for (const item of picked) {
+          const isOver = item.conns > state.poolCap;
+          const btn = document.createElement('button');
+          btn.className = 'btn-instrument py-0.5 px-2 text-[11px]';
+          if (item.minute === state.selectedMinute) {
+            btn.style.borderColor = 'var(--ink-primary)';
+            btn.style.fontWeight = '600';
+          }
+          btn.innerHTML = `
+            <span class="status-dot" style="background-color: ${isOver ? 'var(--accent-vermilion)' : 'var(--accent-ochre)'};"></span>
+            <span>${formatMinToHHMM(item.minute)}</span>
+            <span style="color: var(--ink-secondary);">(${item.conns})</span>
+          `;
+          btn.addEventListener('click', function () {
+            state.selectedMinute = item.minute;
+            renderCollisionCanvas();
+            renderMinuteInspector();
+            renderCollisionHotspots();
+          });
+          container.appendChild(btn);
+        }
+      }
+
+      function renderMinuteInspector() {
+        const m = state.selectedMinute;
+        const conn = state.currentTimeline[m];
+        const baseConn = state.baselineTimeline[m];
+        const jobsHere = state.minuteJobsMap[m] || [];
+
+        document.getElementById('inspectorTimeLabel').textContent =
+          `${formatMinToHHMM(m)} UTC (Minute ${m})`;
+        const connEl = document.getElementById('inspectorConnCount');
+        connEl.textContent = `${conn} / ${state.poolCap} CONNS`;
+        connEl.style.color = conn > state.poolCap ? 'var(--accent-vermilion)' : 'var(--accent-forest)';
+
+        const listEl = document.getElementById('inspectorJobsList');
+        listEl.innerHTML = '';
+
+        if (jobsHere.length === 0) {
+          listEl.innerHTML = `<div class="mono text-xs py-4 text-center" style="color: var(--ink-muted);">NO WORKLOADS ACTIVE AT ${formatMinToHHMM(m)}</div>`;
+        } else {
+          const sorted = [...jobsHere].sort((a, b) => b.conns - a.conns);
+          for (const j of sorted) {
+            const pct = Math.round((j.conns / state.poolCap) * 100);
+            const row = document.createElement('div');
+            row.className = 'p-1.5 panel-bg hairline-border flex items-center justify-between text-xs mono';
+            row.innerHTML = `
+              <div>
+                <span class="font-medium">${escapeHtml(j.name)}</span>
+                <span class="text-[10px] ml-1" style="color: var(--ink-secondary);">[${escapeHtml(j.cron)}]</span>
+              </div>
+              <div class="text-right">
+                <span class="font-semibold">${j.conns}</span>
+                <span class="text-[10px]" style="color: var(--ink-secondary);">(${pct}%)</span>
+              </div>
+            `;
+            listEl.appendChild(row);
+          }
+        }
+
+        const deltaEl = document.getElementById('inspectorDeltaText');
+        if (conn !== baseConn) {
+          const diff = conn - baseConn;
+          deltaEl.textContent = `Baseline @ ${formatMinToHHMM(m)}: ${baseConn} conns (${diff > 0 ? '+' : ''}${diff})`;
+        } else {
+          deltaEl.textContent = `${jobsHere.length} concurrent tasks firing`;
+        }
+      }
+
+      function renderModulo60Grid() {
+        const gridEl = document.getElementById('modulo60Grid');
+        gridEl.innerHTML = '';
+
+        const modMax = new Array(60).fill(0);
+        for (let m = 0; m < 1440; m++) {
+          const mod = m % 60;
+          if (state.currentTimeline[m] > modMax[mod]) {
+            modMax[mod] = state.currentTimeline[m];
+          }
+        }
+
+        const zeroLoad = modMax[0];
+        const avgOther = modMax.slice(1).reduce((a, b) => a + b, 0) / 59;
+        const badgeEl = document.getElementById('phaseSkewBadge');
+        if (zeroLoad > state.poolCap) {
+          badgeEl.textContent = ':00 OVERLOAD HAZARD';
+          badgeEl.style.color = 'var(--accent-vermilion)';
+        } else if (zeroLoad > avgOther * 2.2) {
+          badgeEl.textContent = 'MODERATE :00 SKEW';
+          badgeEl.style.color = 'var(--accent-ochre)';
+        } else {
+          badgeEl.textContent = 'BALANCED PHASE';
+          badgeEl.style.color = 'var(--accent-forest)';
+        }
+
+        for (let mod = 0; mod < 60; mod++) {
+          const val = modMax[mod];
+          const ratio = val / Math.max(1, state.poolCap);
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.className = 'p-1 hairline-border text-center cursor-pointer transition-transform hover:scale-105';
+
+          let bg = 'var(--bg-surface)';
+          let fg = 'var(--ink-secondary)';
+          if (ratio > 1.0) {
+            bg = 'var(--accent-vermilion)';
+            fg = '#FFFFFF';
+          } else if (ratio > 0.7) {
+            bg = 'var(--accent-ochre)';
+            fg = '#FFFFFF';
+          } else if (ratio > 0.35) {
+            bg = '#D9C398';
+            fg = '#161615';
+          }
+
+          cell.style.backgroundColor = bg;
+          cell.style.color = fg;
+          cell.title = `Minute :${String(mod).padStart(2, '0')} — Peak ${val} conns`;
+          cell.textContent = `:${String(mod).padStart(2, '0')}`;
+
+          cell.addEventListener('click', function () {
+            let bestHour = 0;
+            let bestVal = -1;
+            for (let h = 0; h < 24; h++) {
+              const c = state.currentTimeline[h * 60 + mod];
+              if (c > bestVal) {
+                bestVal = c;
+                bestHour = h;
+              }
+            }
+            state.selectedMinute = bestHour * 60 + mod;
+            renderCollisionCanvas();
+            renderMinuteInspector();
+          });
+
+          gridEl.appendChild(cell);
+        }
+      }
+
+      function renderRetryBenchmarkTable() {
+        const tbody = document.getElementById('retryBenchmarkTableBody');
+        tbody.innerHTML = '';
+
+        const policies = [
+          { key: 'none', name: 'Naive Exponential (No Jitter)' },
+          { key: 'equal', name: 'Equal Jitter [base + rand]' },
+          { key: 'full', name: 'AWS Full Jitter [1 .. 4*base*2^n]' },
+          { key: 'decorrelated', name: 'Decorrelated Stateful Jitter' }
+        ];
+
+        for (const pol of policies) {
+          const res = simulateRetryPolicy(
+            pol.key,
+            state.faultDuration,
+            state.maxRetries,
+            state.loadShedding,
+            state.simSeed
+          );
+          const isSelected = pol.key === state.backoffPolicy;
+          const tr = document.createElement('tr');
+          tr.className = 'cursor-pointer hover:opacity-90';
+          if (isSelected) {
+            tr.style.backgroundColor = 'var(--bg-panel)';
+            tr.style.fontWeight = '600';
+          }
+
+          let verdict = 'STABLE RECOVERY';
+          let verdictColor = 'var(--accent-forest)';
+          if (res.recoverySec >= 25) {
+            verdict = 'METASTABLE RETRY STORM';
+            verdictColor = 'var(--accent-vermilion)';
+          } else if (res.recoverySec >= 10) {
+            verdict = 'RESONANT TAIL SPIKES';
+            verdictColor = 'var(--accent-ochre)';
+          }
+
+          tr.innerHTML = `
+            <td class="py-2 px-2">${escapeHtml(pol.name)}</td>
+            <td class="py-2 px-2 text-right">${res.peakTotalLoad} req/s</td>
+            <td class="py-2 px-2 text-right">${res.amplification.toFixed(2)}x</td>
+            <td class="py-2 px-2 text-right">${res.successRate.toFixed(1)}%</td>
+            <td class="py-2 px-2 text-right">${res.recoverySec}s</td>
+            <td class="py-2 px-2" style="color: ${verdictColor};">${verdict}</td>
+          `;
+
+          tr.addEventListener('click', function () {
+            state.backoffPolicy = pol.key;
+            document.getElementById('selectBackoffPolicy').value = pol.key;
+            updateTelemetryStrip();
+            renderRetryBenchmarkTable();
+            renderRetryStormCanvas();
+          });
+          tbody.appendChild(tr);
+        }
+      }
+
+      function renderPatchOutput() {
+        const pre = document.getElementById('patchOutputPre');
+        const fmt = state.exportFormat;
+        const basePeak = Math.max(...state.baselineTimeline, 1);
+        const currPeak = Math.max(...state.currentTimeline, 1);
+
+        if (fmt === 'git_diff') {
+          const lines = [
+            `--- a/ops/schedules/${state.presetKey}.crontab`,
+            `+++ b/ops/schedules/${state.presetKey}.crontab`,
+            `@@ -1,${state.jobs.length} +1,${state.jobs.length} @@`,
+            `# CRONSTORM DE-ALIGNMENT PATCH // STRATEGY: ${state.spreadStrategy.toUpperCase()}`,
+            `# Peak Concurrent DB Connections: ${basePeak} -> ${currPeak} (Pool Cap: ${state.poolCap})`
+          ];
+          for (const j of state.jobs) {
+            if (j.cron.trim() !== j.origCron.trim()) {
+              lines.push(`-${j.origCron.padEnd(18)} ${j.name} # conns=${j.conns} dur=${j.duration}m`);
+              lines.push(`+${j.cron.padEnd(18)} ${j.name} # conns=${j.conns} dur=${j.duration}m [fnv1a:0x${fnv1a32(j.name).toString(16)}]`);
+            } else {
+              lines.push(` ${j.cron.padEnd(18)} ${j.name} # conns=${j.conns} dur=${j.duration}m`);
+            }
+          }
+          pre.textContent = lines.join('\n');
+        } else if (fmt === 'crontab') {
+          const lines = [
+            `# =====================================================================`,
+            `# PRODUCTION CRONTAB // GENERATED BY CRONSTORM v1.4.2`,
+            `# Peak Concurrency: ${currPeak} conns (DB Pool Cap: ${state.poolCap})`,
+            `# =====================================================================`
+          ];
+          for (const j of state.jobs) {
+            lines.push(`${j.cron.padEnd(18)} /usr/local/bin/run-job ${j.name} # conns=${j.conns} dur=${j.duration}m`);
+          }
+          pre.textContent = lines.join('\n');
+        } else {
+          const blocks = state.jobs.map(j => [
+            `apiVersion: batch/v1`,
+            `kind: CronJob`,
+            `metadata:`,
+            `  name: ${j.name.toLowerCase().replace(/[^a-z0-9-]/g, '-')}`,
+            `  annotations:`,
+            `    cronstorm.io/orig-schedule: "${j.origCron}"`,
+            `    cronstorm.io/db-pool-conns: "${j.conns}"`,
+            `spec:`,
+            `  schedule: "${j.cron}"`,
+            `  concurrencyPolicy: Forbid`
+          ].join('\n'));
+          pre.textContent = blocks.join('\n---\n');
+        }
+      }
+
+      function syncRawCrontabTextarea() {
+        const lines = state.jobs.map(j => `${j.cron} ${j.name} ${j.conns} ${j.duration}`);
+        document.getElementById('textareaRawCrontab').value = lines.join('\n');
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // =========================================================================
+      // 7. EVENT LISTENERS & INTERACTIVITY WIRING
+      // =========================================================================
+      function loadPreset(key) {
+        const preset = PRESETS[key] || PRESETS.fintech;
+        state.presetKey = key;
+        state.poolCap = preset.poolCap;
+        state.jobs = preset.jobs.map(j => ({ ...j }));
+        document.getElementById('inputPoolCap').value = String(state.poolCap);
+        document.getElementById('labelPoolCapVal').textContent = String(state.poolCap);
+        state.selectedMinute = 0;
+        syncRawCrontabTextarea();
+        recomputeAllAndRender();
+      }
+
+      function initEvents() {
+        document.getElementById('presetSelect').addEventListener('change', function (e) {
+          loadPreset(e.target.value);
+        });
+
+        document.getElementById('btnDealignAll').addEventListener('click', function () {
+          applyAutoDealignAll();
+          syncRawCrontabTextarea();
+        });
+
+        document.getElementById('btnResetManifest').addEventListener('click', function () {
+          for (const j of state.jobs) {
+            j.cron = j.origCron;
+          }
+          syncRawCrontabTextarea();
+          recomputeAllAndRender();
+        });
+
+        document.getElementById('btnThemeToggle').addEventListener('click', function () {
+          state.darkMode = !state.darkMode;
+          document.documentElement.classList.toggle('dark-instrument', state.darkMode);
+          document.getElementById('themeLabel').textContent = state.darkMode ? 'ARCHIVAL PAPER' : 'DARKROOM';
+          renderCollisionCanvas();
+          renderRetryStormCanvas();
+        });
+
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+          btn.addEventListener('click', function () {
+            const targetId = btn.getAttribute('data-tab');
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+              pane.classList.toggle('hidden', pane.id !== targetId);
+            });
+            renderCollisionCanvas();
+            renderRetryStormCanvas();
+          });
+        });
+
+        document.getElementById('inputPoolCap').addEventListener('input', function (e) {
+          state.poolCap = parseInt(e.target.value, 10) || 120;
+          document.getElementById('labelPoolCapVal').textContent = String(state.poolCap);
+          recomputeAllAndRender();
+        });
+
+        document.getElementById('selectSpreadStrategy').addEventListener('change', function (e) {
+          state.spreadStrategy = e.target.value;
+          applyAutoDealignAll();
+        });
+
+        document.getElementById('btnToggleRawEditor').addEventListener('click', function () {
+          const box = document.getElementById('rawEditorContainer');
+          const isHidden = box.classList.toggle('hidden');
+          document.getElementById('rawEditorToggleText').textContent = isHidden ? 'RAW CRONTAB' : 'CLOSE RAW';
+          if (!isHidden) syncRawCrontabTextarea();
+        });
+
+        document.getElementById('btnApplyRawCrontab').addEventListener('click', function () {
+          const raw = document.getElementById('textareaRawCrontab').value;
+          const lines = raw.split('\n');
+          const parsed = [];
+          let idx = 1;
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) continue;
+            const parts = trimmed.split(/\s+/);
+            if (parts.length >= 6) {
+              const cron = parts.slice(0, 5).join(' ');
+              if (expandCronToDayMinutes(cron)) {
+                const name = parts[5];
+                const conns = Math.max(1, parseInt(parts[6], 10) || 18);
+                const duration = Math.max(1, parseInt(parts[7], 10) || 3);
+                parsed.push({
+                  id: 'raw_' + idx++,
+                  name,
+                  cron,
+                  origCron: cron,
+                  conns,
+                  duration
+                });
+              }
+            }
+          }
+          const fb = document.getElementById('rawParseFeedback');
+          if (parsed.length > 0) {
+            state.jobs = parsed;
+            fb.textContent = `Loaded ${parsed.length} valid schedules into workbench.`;
+            fb.style.color = 'var(--accent-forest)';
+            recomputeAllAndRender();
+          } else {
+            fb.textContent = 'Error: Provide lines with 5 cron fields + service_name [conns] [duration].';
+            fb.style.color = 'var(--accent-vermilion)';
+          }
+        });
+
+        document.getElementById('btnAddJobModal').addEventListener('click', function () {
+          document.getElementById('addJobContainer').classList.toggle('hidden');
+        });
+
+        document.getElementById('btnConfirmAddJob').addEventListener('click', function () {
+          const cron = document.getElementById('newJobCron').value.trim();
+          const name = document.getElementById('newJobName').value.trim() || 'custom-worker';
+          const conns = Math.max(1, parseInt(document.getElementById('newJobConns').value, 10) || 15);
+          const errEl = document.getElementById('addJobError');
+
+          if (!expandCronToDayMinutes(cron)) {
+            errEl.textContent = 'Invalid 5-field cron expression (e.g. */15 * * * *).';
+            errEl.classList.remove('hidden');
+            return;
+          }
+          errEl.classList.add('hidden');
+          state.jobs.unshift({
+            id: 'custom_' + Date.now(),
+            name,
+            cron,
+            origCron: cron,
+            conns,
+            duration: 3
+          });
+          syncRawCrontabTextarea();
+          recomputeAllAndRender();
+        });
+
+        document.getElementById('inputSearchJobs').addEventListener('input', function (e) {
+          state.searchQuery = e.target.value;
+          renderJobsTable();
+        });
+
+        document.getElementById('selectCollisionFilter').addEventListener('change', function (e) {
+          state.collisionFilter = e.target.value;
+          renderJobsTable();
+        });
+
+        const tbody = document.getElementById('jobsTableBody');
+        tbody.addEventListener('change', function (e) {
+          const target = e.target;
+          if (!target.classList.contains('job-input')) return;
+          const jobId = target.getAttribute('data-job-id');
+          const field = target.getAttribute('data-field');
+          const job = state.jobs.find(j => j.id === jobId);
+          if (!job) return;
+
+          if (field === 'cron') {
+            if (expandCronToDayMinutes(target.value)) {
+              job.cron = target.value.trim();
+              target.style.borderColor = 'var(--border-hairline)';
+              recomputeAllAndRender();
+            } else {
+              target.style.borderColor = 'var(--accent-vermilion)';
+            }
+          } else if (field === 'conns') {
+            job.conns = Math.max(1, Math.min(300, parseInt(target.value, 10) || 10));
+            recomputeAllAndRender();
+          }
+        });
+
+        tbody.addEventListener('click', function (e) {
+          const btn = e.target.closest('button[data-action]');
+          if (!btn) return;
+          const action = btn.getAttribute('data-action');
+          const jobId = btn.getAttribute('data-job-id');
+          const idx = state.jobs.findIndex(j => j.id === jobId);
+          if (idx === -1) return;
+
+          if (action === 'delete-one') {
+            if (state.jobs.length > 1) {
+              state.jobs.splice(idx, 1);
+              recomputeAllAndRender();
+            }
+          } else if (action === 'jitter-one') {
+            const job = state.jobs[idx];
+            job.cron = dealignJobCron(job, idx, state.spreadStrategy, state.currentTimeline);
+            recomputeAllAndRender();
+          }
+        });
+
+        const colCanvas = document.getElementById('collisionCanvas');
+        function pickMinuteFromMouse(evt) {
+          const rect = colCanvas.getBoundingClientRect();
+          const padL = 44;
+          const padR = 16;
+          const plotW = Math.max(1, rect.width - padL - padR);
+          const relX = evt.clientX - rect.left - padL;
+          const ratio = Math.max(0, Math.min(1, relX / plotW));
+          state.selectedMinute = Math.round(ratio * 1439);
+          renderCollisionCanvas();
+          renderMinuteInspector();
+        }
+        colCanvas.addEventListener('click', pickMinuteFromMouse);
+        colCanvas.addEventListener('mousemove', function (e) {
+          if (e.buttons === 1) pickMinuteFromMouse(e);
+        });
+
+        document.getElementById('btnPrevSpike').addEventListener('click', function () {
+          for (let step = 1; step < 1440; step++) {
+            const m = (state.selectedMinute - step + 1440) % 1440;
+            if (state.currentTimeline[m] >= state.poolCap * 0.75) {
+              state.selectedMinute = m;
+              break;
+            }
+          }
+          renderCollisionCanvas();
+          renderMinuteInspector();
+        });
+
+        document.getElementById('btnNextSpike').addEventListener('click', function () {
+          for (let step = 1; step < 1440; step++) {
+            const m = (state.selectedMinute + step) % 1440;
+            if (state.currentTimeline[m] >= state.poolCap * 0.75) {
+              state.selectedMinute = m;
+              break;
+            }
+          }
+          renderCollisionCanvas();
+          renderMinuteInspector();
+        });
+
+        document.getElementById('selectBackoffPolicy').addEventListener('change', function (e) {
+          state.backoffPolicy = e.target.value;
+          updateTelemetryStrip();
+          renderRetryBenchmarkTable();
+          renderRetryStormCanvas();
+        });
+
+        document.getElementById('inputFaultDuration').addEventListener('input', function (e) {
+          state.faultDuration = parseInt(e.target.value, 10) || 18;
+          document.getElementById('labelFaultDur').textContent = `${state.faultDuration}s`;
+          updateTelemetryStrip();
+          renderRetryBenchmarkTable();
+          renderRetryStormCanvas();
+        });
+
+        document.getElementById('inputMaxRetries').addEventListener('input', function (e) {
+          state.maxRetries = parseInt(e.target.value, 10) || 4;
+          document.getElementById('labelMaxRetries').textContent = String(state.maxRetries);
+          updateTelemetryStrip();
+          renderRetryBenchmarkTable();
+          renderRetryStormCanvas();
+        });
+
+        document.getElementById('selectLoadShedding').addEventListener('change', function (e) {
+          state.loadShedding = e.target.value;
+          updateTelemetryStrip();
+          renderRetryBenchmarkTable();
+          renderRetryStormCanvas();
+        });
+
+        document.getElementById('btnRunRetrySim').addEventListener('click', function () {
+          state.simSeed = (state.simSeed + 7919) >>> 0;
+          updateTelemetryStrip();
+          renderRetryBenchmarkTable();
+          renderRetryStormCanvas();
+        });
+
+        document.getElementById('selectExportFormat').addEventListener('change', function (e) {
+          state.exportFormat = e.target.value;
+          renderPatchOutput();
+        });
+
+        document.getElementById('btnCopyPatch').addEventListener('click', function () {
+          const text = document.getElementById('patchOutputPre').textContent;
+          const label = document.getElementById('copyPatchLabel');
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(text);
+            } else {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+            }
+            label.textContent = 'COPIED TO CLIPBOARD';
+            setTimeout(() => { label.textContent = 'COPY ARTIFACT'; }, 1800);
+          } catch (_) {
+            label.textContent = 'COPY READY';
+          }
+        });
+
+        window.addEventListener('resize', function () {
+          renderCollisionCanvas();
+          renderRetryStormCanvas();
+        });
+      }
+
+      window.addEventListener('DOMContentLoaded', function () {
+        initEvents();
+        loadPreset('fintech');
+      });
+    })();
+  </script>
+</body>
+</html>
