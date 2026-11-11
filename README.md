@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **This repo is archived.** Use [cronphase](https://github.com/acus9345/cronphase) instead; it does the same job and is maintained.
+
 # CRONSTORM (`cronstorm`)
 
 **Deterministic Distributed Schedule Collision Analyzer, Auto-Jitter Patch Generator & Metastable Retry-Storm Physics Engine.**
